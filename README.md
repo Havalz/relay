@@ -1,208 +1,54 @@
 # Relay
 
-**Two people share one spatial work queue. Claiming a card transfers ownership, so it
-vanishes from your partner's view the moment you take it.**
+**A shared spatial work queue for two people on Specs.**
+CLAD Summer Hackathon · Week 3 · *Connect*
 
-Built for Snap Spectacles in Lens Studio.
-
-- **Demo video:** [Watch on Google Drive](https://drive.google.com/file/d/1Uz2kg321gxzQwrwnZdW2tuxV92j8ipGf/view?usp=sharing)
-- **Companion sender page:** [https://havalz.github.io/relay/web/](https://havalz.github.io/relay/web/)
-  (source: [`web/index.html`](web/index.html) — runs locally with no server too)
+Relay hangs one work queue in the air between two people wearing Specs. Claiming a card transfers ownership — it lifts into your lane and dissolves from your partner's view, so the board answers "who has what" without either of you asking. It's spatial because the queue's two most important facts are positions rather than fields: urgent work floats higher, and the longer something waits the closer it drifts toward you.
 
 ---
 
-## What it connects
+## What it is
 
-Relay is a Connect project in three literal senses.
+A list tells you what exists. Relay tells you **what's urgent, what's been ignored, and whose it is** — through where a card hangs and what colour it is, so a glance does the work of a status meeting.
 
-**It connects people.** Two people wearing Spectacles join one colocated session and
-see the same board. Not a shared screen — a shared *space*. When your partner takes a
-card, it dissolves from your view with a whisper played at the position it occupied,
-so you hear where they are working before you look. Presence, the queue counter and
-each person's local clock sit in the header: two people, two places, one board.
+- **Claim a card** — pinch it. One client arbitrates every claim, so two people reaching for the same card can never both win.
+- **Ownership transfers** — it settles into your lane in jade and dissolves from your partner's view, with a whisper played at the position it left, so you hear where they're working before you look.
+- **Pass it across** — drag a card out of your lane and it travels the space between you along a swept ribbon, arriving on their side facing them.
+- **Read it in your own language** — six languages, translated on demand by Gemini and cached in the row, so you both read one queue in two scripts.
+- **Send work from anywhere** — a companion web page composes an item and sets its priority; it reaches both headsets within three seconds.
 
-**It connects platforms.** The queue is a real Supabase Postgres table, not a fixture.
-A third person — support, a manager, whoever is fielding the work — opens a companion
-web page, composes an item, sets its priority, and it appears on both headsets within
-three seconds. The web page also reads the board back, so the sender watches items get
-claimed in real time.
+## Interaction & feel
 
-**It connects an everyday workflow.** Triaging a shared queue is ordinary, unglamorous
-work that two people currently do by talking over each other in Slack. Relay is that
-workflow, in space, where "who has what" is answered by looking rather than asking.
+The whole lens runs on one input — the SIK pinch — with a drag for the pass, so there is nothing to learn. Sound carries what vision can't: claims land with the weight of a lifted stone, and a partner's dissolve plays *spatially*, at the card's own position, which turns "it vanished" into "she took that one, over there". Cards are real slabs with 1.8 cm of depth and a tinted-glass surface, and colour is spent on exactly one thing — mineral for unclaimed, jade for yours, lilac for your partner's, identical on both screens.
 
----
+## Why it fits *Connect*
 
-## The spatial encoding
+The theme asks for experiences that connect people, platforms, or everyday workflows. Relay does all three at once: two people in one colocated session sharing a single board, a real Supabase queue with a companion web page feeding it from outside the headset, and the most ordinary shared workflow there is — triaging a queue that two people are working at the same time. It replaces the "who's taking this?" message with a card that visibly leaves your partner's hands.
 
-The central thesis: **the space carries the data.** A list needs columns and labels to
-tell you what matters. A room does not.
+## Built with CLAD
 
-| Axis | Meaning | How it reads |
-|---|---|---|
-| **Height** | urgency | urgent floats high, calm settles low |
-| **Distance** | age | the longer something waits, the closer it comes |
-| **Colour** | ownership | mineral = unclaimed, jade = yours, lilac = your partner's |
+Relay was built end to end with CLAD — scene, scripts, shaders, meshes, procedural audio and the web page were generated and iterated through AI-assisted development, then verified in the Lens Studio preview. The full prompt-by-prompt account, including the design reversals and the two visual approaches that were cut on evidence, is in [`CLAD_PROMPT_LOG.md`](./CLAD_PROMPT_LOG.md).
 
-Cards sit on a shallow arc so that the two encoded axes stay independent — the slot
-angle only spreads cards apart, it carries no data. Age is normalised on a **log**
-scale, because queue ages are heavy-tailed: four items minutes old next to one a day
-old is normal, and a linear axis lets the stale item own the whole range and flatten
-everything else.
+A few things worth calling out:
+- **Host authority as a structural property** — one client owns the store and decides every claim, so a double-claim isn't prevented by timing, it's impossible. Ownership lives in the database row, never in a transferred SyncEntity, so the board survives a client dropping mid-claim.
+- **Batched, lazy Gemini triage** — the whole queue is triaged in one call on the host, and nothing is translated until someone picks a language. An item that arrives with a hand-written summary skips the model entirely.
+- **Views are pooled, never destroyed** — destroying card objects poisoned SIK's interactable cache and killed targeting after the first claim. Recycled views are fully scrubbed, so a pooled card can't render stale content for even one frame.
+- **Regression-tested with LEAF** — ✅ `relay-queue-renders`, `relay-claim-three`, `relay-language-chip` and `relay-empty-state` all pass, run as two passes: `relay-empty-state` needs an emptied queue where the other three need it populated, and `relay-claim-three` is single-client, so run it against one pane for a clean result. ⚠️ Everything genuinely two-user — a claim clearing the partner's board, the pass, the spatial audio — is verified by hand, because LEAF runs inside a single lens instance and can't observe the other headset.
 
-Claimed cards drop into a lane of their own, below and in front of the arc, separated
-by construction rather than by tuning: the arc has a hard floor at −10.77°, the lane's
-highest edge sits at −12.88°, and that 2.11° gap holds in every arc state and at every
-lane count from one card to five.
+## Tech
 
----
+Snap Specs · Lens Studio · CLAD · Spectacles Sync Kit · Spectacles Interaction Kit · Gemini via Remote Service Gateway · Supabase · TypeScript
 
-## How it's built
+## Demo
 
-| Piece | What it does |
-|---|---|
-| **CLAD + Claude Code** | the whole build, agent-driven — see [`CLAD_PROMPT_LOG.md`](CLAD_PROMPT_LOG.md) |
-| **Spectacles Sync Kit** | colocated two-user session, host election, event transport |
-| **Spectacles Interaction Kit / UI Kit** | pinch targeting, drag-to-pass, the glass plates |
-| **Supabase** | the live queue (`work_items`), read and written by both the lens and the web page |
-| **Gemini via Remote Service Gateway** | triage (priority + an eight-word summary) and on-demand translation into 6 languages |
-| **`web/index.html`** | the sender's control panel — no build step, no dependencies |
+📹 **[Demo video](https://drive.google.com/file/d/1Uz2kg321gxzQwrwnZdW2tuxV92j8ipGf/view?usp=sharing)**
 
-Sounds are generated procedurally (`tempAssetGen/gen_sfx_relay.js`); the card slabs and
-the pass ribbon are real meshes with hand-authored shader graphs.
+🌐 **[Companion sender page](https://havalz.github.io/relay/web/)**
 
----
+## Notes for running locally
 
-## Five engineering decisions
+This is a Specs project reviewed in the Lens Studio preview, with two panes open and Multiplayer started in each. The Remote Service Gateway tokens in `Assets/Scene.scene` are intentionally blank — RSG tokens are tied to an individual Snap account, so to run live triage and translation you'll generate your own via *Window → Remote Service Gateway Token* and paste them into the `RemoteServiceGatewayCredentials` object. Without them the queue still renders; only the AI summaries and translations are unavailable.
 
-**1. Host authority is a structural property, not a lock.**
-Exactly one client owns the store (`syncEntity.doIOwnStore()`), and every claim is a
-*request* to that client. The arbiter decides and broadcasts the outcome — including to
-the loser, who sees an explicit "claimed by partner" rather than a card that silently
-fails to move. A double-claim is not prevented by timing or a mutex; it is impossible
-because only one machine is ever entitled to decide.
+The Supabase key in this repo is the **publishable** key, and it is public by design — Supabase publishable keys are meant to ship in client code, and access is enforced in the database instead. Row Level Security admits inserts only with `status = 'open'`, and column-level grants let anonymous callers write just `(source, title, body)` on insert and `(priority, summary, status, claimed_by, translations)` on update. The `service_role` key is not in this repository, and neither are database passwords or model keys.
 
-**2. Gemini triage is batched, lazy and idempotent.**
-The whole queue is triaged in one request rather than one request per item, only on the
-host, and only for items that arrive without a priority or summary. Translation is
-lazier still: nothing is translated until somebody actually picks a language, then the
-whole queue is filled in a single call and cached in the row. An item that arrives with
-a hand-written summary skips the model entirely — which is exactly how the web page's
-"write my own" toggle works.
-
-**3. Claiming does not transfer a SyncEntity.**
-The obvious implementation is to move ownership of a synced object to the claimer. We
-refused it. Ownership lives in the `work_items` row as data, and the sync layer only
-carries *events*. That keeps the database the single source of truth, survives a client
-dropping mid-claim, and means the board reconstructs correctly from a cold fetch —
-whereas transferred entity ownership would have been state that exists only in the
-session and dies with it.
-
-**4. Views are pooled, never destroyed.**
-Destroying card SceneObjects poisoned SIK's interactable cache and killed targeting for
-the entire client after the first claim. Cards are now recycled through a pool, and a
-view returning to the pool is fully scrubbed — every field reset, every animation
-cleared — so a recycled object can never render stale content, not even for one frame.
-`relay-claim-three` exists specifically to guard this: three consecutive claims is the
-shape that caught the original bug.
-
-**5. Colour encodes ownership and nothing else.**
-No hue is ever spent on status, source, urgency or which headset you happen to be
-wearing. Both people see a card in the *same* colour — jade means "the local user owns
-this" on both screens, which is what makes ownership legible at a glance instead of
-something you have to decode per-pane. Urgency uses height and brightness; the per-pane
-difference is ambient light in the room, not the cards.
-
----
-
-## Test coverage (LEAF)
-
-LEAF scenarios live in [`Assets/Scripts/Leaf/`](Assets/Scripts/Leaf/) and run inside
-the lens.
-
-| Scenario | Status | Notes |
-|---|---|---|
-| `relay-queue-renders` | ✅ **passing** | asserts the header says *live from Supabase*, that 1–5 cards reached the arc, and that every headline is non-empty |
-| `relay-language-chip` | ✅ **passing** | dropdown opens, every row is enabled and clear of the chip's hit volume, English selects, the list collapses again |
-| `relay-claim-three` | ✅ **passing** | three consecutive claims; guards the pooling regression; asserts lane scale |
-| `relay-empty-state` | ✅ **passing** | zero open rows produce a real empty state, and the local fallback dataset is *not* substituted |
-
-All four pass — but not in a single run, and the reason is worth stating plainly.
-
-**`relay-empty-state` requires the opposite precondition to the other three.** It asserts
-against a queue where every row is non-open, and its own docstring says so: *"against a
-populated queue it will fail, and that failure is correct — it means the precondition was
-not met."* The Lens cannot empty its own queue, so the database state is arranged from
-outside:
-
-```sql
--- for relay-queue-renders / relay-language-chip / relay-claim-three
-update work_items set status='open', claimed_by=null;
--- for relay-empty-state
-update work_items set status='claimed' where status='open';
-```
-
-**`relay-claim-three` is a single-client scenario.** Both preview panes run the suite
-simultaneously, and both reach for the same top card; the host grants one and denies the
-other, which is host arbitration working correctly, but it means the losing pane's
-assertion fails. It passes on the pane that wins. Run it against one pane for a clean
-result.
-
-### What LEAF cannot cover, and why
-
-**LEAF runs inside a single lens instance.** It can drive one client's hands and read
-one client's scene. It cannot observe the other headset. So every genuinely two-user
-behaviour is verified **manually**, across two preview panes:
-
-| Behaviour | Verification |
-|---|---|
-| A claim on pane A removes the card from pane B | manual, two panes |
-| Direct pass — drag a card to your partner | manual; the harness cannot deliver SIK `onDragEnd` |
-| Pass direction mirrors correctly from both panes | manual, sent in both directions |
-| Spatial dissolve audio at the partner's card position | manual, by ear |
-| Web page submit → both panes within 3 s | manual, verified end-to-end |
-| The language dropdown's hover-revealed labels | manual; the synthetic hand is blocked by an interaction plane |
-
-The local half of "a claim removes it from the partner's view" — the card leaving *this*
-arc and landing in *this* lane — is automated. The partner's half is not observable
-from inside one lens instance and stays a manual check.
-
----
-
-## Security
-
-**The Supabase key in this repo is the publishable key, and it is public by design.**
-
-Supabase publishable keys are meant to ship in client code. What actually restricts
-access is enforced in the database:
-
-- **Row Level Security** — `SELECT` is open; `INSERT` is admitted only with
-  `status = 'open'`; `UPDATE` is policy-gated.
-- **Column-level grants** — anon may `INSERT` only `(source, title, body)` and `UPDATE`
-  only `(priority, summary, status, claimed_by, translations)`. Nothing else is
-  writable.
-
-That grant split is why the web page submits in two requests — insert the columns it
-may insert, then patch priority and summary — rather than one. It needs no permission
-the project did not already have.
-
-The `service_role` key appears nowhere in this repository, and neither do database
-passwords or model API keys. Gemini is reached through Remote Service Gateway, which
-holds its own credentials outside the project.
-
----
-
-## Running it
-
-1. Open `Relay.esproj` in Lens Studio (5.23+, SPECS 27).
-2. Point `RELAY_SUPABASE_URL` and `RELAY_SUPABASE_PUBLISHABLE_KEY` in
-   `Assets/Scripts/RelayConfig.ts` at your own Supabase project, with a `work_items`
-   table and the grants above. The same two values are set at the top of the
-   `<script>` block in `web/index.html`.
-3. Generate Remote Service Gateway tokens (**Window → Remote Service Gateway Token**)
-   for Gemini triage and translation. The token fields ship blank on purpose.
-4. Open two preview panes and start **Multiplayer** in each.
-5. Open `web/index.html` in a browser to send work to the board.
-
-Without Supabase configured the lens falls back to local sample data and says so in the
-header — it never pretends a fixture is a live queue.
+Generated Lens Studio caches, the debug signing key and local editor configuration are intentionally excluded from this repository.
