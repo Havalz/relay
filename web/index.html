@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>relay — sender</title>
+<style>
+  /*
+    The third person's control surface.
+
+    Two people wear the glasses; this is for whoever is handing them work. It has to feel
+    like the same product — the same tinted glass, the same restraint, the same rule that
+    colour means ownership — while doing a job the lens cannot: composing an item and
+    watching the board answer.
+
+    THE MATERIAL IS THE POINT.
+    The lens renders its cards as tinted glass slabs with real depth. A browser can do
+    what the lens preview cannot — genuine backdrop blur, soft edge glow, layered shadow —
+    so this page is built from the same material rather than a flat imitation of it. Every
+    control is a small glass object: pills, a frosted track, a sliding switch.
+
+    Mineral is the page's voice. Jade is the accent — active, chosen, primary. Lilac
+    appears where the partner does: the second wordmark dot, and claimed work that has
+    left the sender's hands. Nothing the sender is composing is owned yet, so nothing in
+    the composer is jade until they choose it.
+  */
+  :root {
+    --ink:     #0B1114;
+    --mineral: #A3C2D0;
+    --jade:    #6FC79B;
+    --lilac:   #B8A4F0;
+
+    /* One ease, everywhere. Ease-out — nothing on this page bounces. */
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+    /* The glass recipe, named once so every surface is unmistakably the same material. */
+    --glass-fill: linear-gradient(
+      180deg,
+      rgba(163, 194, 208, 0.085),
+      rgba(163, 194, 208, 0.028) 45%,
+      rgba(163, 194, 208, 0.052)
+    );
+    --glass-edge: rgba(163, 194, 208, 0.15);
+    --glass-lip:  inset 0 1px 0 rgba(255, 255, 255, 0.11);
+    --glass-base: inset 0 -1px 0 rgba(0, 0, 0, 0.30);
+    --glass-cast: 0 24px 60px -26px rgba(0, 0, 0, 0.9);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { min-height: 100%; margin: 0; }
+
+  body {
+    background: var(--ink);
+    color: var(--mineral);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    justify-content: center;
+    padding: 44px 22px 96px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /*
+    Atmosphere, not decoration. Backdrop-blur needs something behind it to be worth doing:
+    two soft blooms — jade where the local user is, lilac where the partner is — give the
+    glass something to actually refract, and quietly state the two-user identity before a
+    single word is read.
+  */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -20vmax;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(38vmax 30vmax at 18% 8%,  rgba(111, 199, 155, 0.13), transparent 68%),
+      radial-gradient(34vmax 30vmax at 88% 34%, rgba(184, 164, 240, 0.11), transparent 68%),
+      radial-gradient(46vmax 34vmax at 50% 108%, rgba(163, 194, 208, 0.07), transparent 70%);
+  }
+
+  main { width: 100%; max-width: 35rem; position: relative; z-index: 1; }
+
+  /* ---- wordmark ---------------------------------------------------------- */
+  .mark { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2.25rem; }
+  .dot {
+    width: 0.5rem; height: 0.5rem; border-radius: 50%; flex: none;
+    /* Each dot is a lit bead, not a printed circle. */
+    box-shadow: 0 0 12px 1px currentColor, inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+  .dot.jade  { background: var(--jade);  color: rgba(111, 199, 155, 0.55); }
+  .dot.lilac { background: var(--lilac); color: rgba(184, 164, 240, 0.5); }
+  .mark span.name {
+    margin-left: 0.35rem;
+    font-size: 0.95rem; font-weight: 500;
+    letter-spacing: 0.42em; color: var(--mineral);
+  }
+  .mark .role {
+    margin-left: auto;
+    letter-spacing: 0.16em; text-transform: uppercase; font-size: 0.64rem;
+    color: rgba(163, 194, 208, 0.5);
+    padding: 0.34rem 0.7rem;
+    border-radius: 999px;
+    background: var(--glass-fill);
+    border: 1px solid rgba(163, 194, 208, 0.12);
+    box-shadow: var(--glass-lip);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+
+  /* ---- glass panels ------------------------------------------------------ */
+  /*
+    A panel is three things at once: a translucent fill, a lit top lip where the light
+    catches the edge, and a shadow that lifts it off the ink. Remove any one of them and
+    it stops reading as glass and starts reading as a grey rectangle.
+  */
+  .panel {
+    position: relative;
+    isolation: isolate;
+    border-radius: 24px;
+    padding: 1.9rem;
+    margin-bottom: 1.35rem;
+    background: var(--glass-fill);
+    border: 1px solid var(--glass-edge);
+    -webkit-backdrop-filter: blur(28px) saturate(140%);
+    backdrop-filter: blur(28px) saturate(140%);
+    box-shadow:
+      var(--glass-lip),
+      var(--glass-base),
+      var(--glass-cast),
+      0 0 50px -22px rgba(111, 199, 155, 0.28);
+    overflow: hidden;
+    transition: box-shadow 420ms var(--ease), border-color 420ms var(--ease);
+  }
+  /* Working in a panel warms its edge — the glass responds to being used. */
+  .panel:focus-within {
+    border-color: rgba(163, 194, 208, 0.24);
+    box-shadow:
+      var(--glass-lip),
+      var(--glass-base),
+      var(--glass-cast),
+      0 0 60px -18px rgba(111, 199, 155, 0.42);
+  }
+  /* The sheen: light pooling across the top, as it does on any wet surface. */
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    /*
+      Both layers must fade to nothing INSIDE the box. A gradient that is still bright
+      where the element ends leaves a hard seam across the panel — which is the one thing
+      that instantly reads as a flat rectangle rather than glass.
+    */
+    background:
+      radial-gradient(130% 55% at 30% -12%, rgba(255, 255, 255, 0.085), transparent 62%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 34%);
+  }
+  .panel > * { position: relative; }
+
+  /* ---- section headers, with the active underline ------------------------ */
+  .head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.85rem;
+    margin-bottom: 1.55rem;
+    border-bottom: 1px solid rgba(163, 194, 208, 0.11);
+  }
+  .head h2 {
+    margin: 0;
+    font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(163, 194, 208, 0.62);
+    position: relative;
+    padding-bottom: 0.85rem;
+    margin-bottom: -0.86rem;
+  }
+  /*
+    The jade underline marks where you are working. It grows from the left rather than
+    fading in, so the eye follows it to the section that just became active.
+  */
+  .head h2::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: -1px;
+    height: 1px; width: 100%;
+    background: var(--jade);
+    box-shadow: 0 0 10px rgba(111, 199, 155, 0.8);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 420ms var(--ease);
+  }
+  .panel:focus-within .head h2 { color: var(--mineral); }
+  .panel:focus-within .head h2::after { transform: scaleX(1); }
+
+  label, .lbl {
+    display: block;
+    font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: rgba(163, 194, 208, 0.5);
+    margin-bottom: 0.7rem;
+  }
+
+  .field { margin-bottom: 1.7rem; }
+  .field:last-of-type { margin-bottom: 0; }
+
+  /* ---- frosted fields ---------------------------------------------------- */
+  .well {
+    position: relative;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(11, 17, 20, 0.5), rgba(163, 194, 208, 0.035));
+    border: 1px solid rgba(163, 194, 208, 0.13);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: border-color 320ms var(--ease), box-shadow 320ms var(--ease);
+    overflow: hidden;
+  }
+  /* The jade underline on focus — the same signal as the section header, one level down. */
+  .well::after {
+    content: "";
+    position: absolute;
+    left: 12px; right: 12px; bottom: 0;
+    height: 1px;
+    background: var(--jade);
+    box-shadow: 0 0 10px rgba(111, 199, 155, 0.85);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 340ms var(--ease);
+  }
+  .well:focus-within {
+    border-color: rgba(163, 194, 208, 0.26);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.42), 0 0 26px -10px rgba(111, 199, 155, 0.55);
+  }
+  .well:focus-within::after { transform: scaleX(1); }
+
+  input[type="text"], textarea {
+    width: 100%;
+    background: transparent; border: 0;
+    color: var(--mineral); font: inherit; font-size: 1rem;
+    padding: 0.8rem 0.95rem; outline: none; resize: none;
+    display: block;
+  }
+  textarea { line-height: 1.55; }
+  input[type="text"]::placeholder, textarea::placeholder { color: rgba(163, 194, 208, 0.32); }
+  input:disabled, textarea:disabled { opacity: 0.45; }
+
+  /* ---- glass pills (source chips, summary switch) ------------------------ */
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .chip {
+    position: relative;
+    background: var(--glass-fill);
+    border: 1px solid rgba(163, 194, 208, 0.16);
+    border-radius: 999px;
+    color: rgba(163, 194, 208, 0.66);
+    font: inherit; font-size: 0.7rem; letter-spacing: 0.11em;
+    padding: 0.5rem 0.95rem; cursor: pointer;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--glass-lip), 0 6px 16px -10px rgba(0, 0, 0, 0.9);
+    transition: color 280ms var(--ease), border-color 280ms var(--ease),
+                box-shadow 280ms var(--ease), transform 280ms var(--ease),
+                background-color 280ms var(--ease);
+  }
+  .chip:hover:not(:disabled) {
+    color: var(--mineral);
+    border-color: rgba(163, 194, 208, 0.34);
+    transform: translateY(-1px);
+    box-shadow: var(--glass-lip), 0 10px 22px -12px rgba(0, 0, 0, 0.95);
+  }
+  .chip:focus-visible { outline: 1px solid rgba(111, 199, 155, 0.7); outline-offset: 2px; }
+  /*
+    Chosen is JADE — the accent means "this is the active choice", exactly as it does on
+    the send button and the slider handle. The glow is inside and outside: a lit object,
+    not a filled swatch.
+  */
+  .chip[aria-pressed="true"] {
+    color: #E6F7EE;
+    background: rgba(111, 199, 155, 0.16);
+    border-color: rgba(111, 199, 155, 0.55);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      inset 0 0 14px rgba(111, 199, 155, 0.3),
+      0 0 22px -6px rgba(111, 199, 155, 0.6);
+  }
+  .chip:disabled { opacity: 0.4; cursor: default; }
+
+  /* ---- priority ---------------------------------------------------------- */
+  .prio-head { display: flex; align-items: baseline; justify-content: space-between; }
+  .prio-val {
+    font-size: 0.78rem; letter-spacing: 0.08em;
+    color: var(--jade);
+    text-shadow: 0 0 14px rgba(111, 199, 155, 0.65);
+  }
+
+  .track-wrap {
+    margin: 0.85rem 0 0.6rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(11, 17, 20, 0.45), rgba(163, 194, 208, 0.03));
+    border: 1px solid rgba(163, 194, 208, 0.11);
+    box-shadow: inset 0 2px 7px rgba(0, 0, 0, 0.45);
+  }
+
+  input[type="range"] {
+    width: 100%; margin: 0; display: block;
+    background: transparent;
+    -webkit-appearance: none; appearance: none; cursor: pointer;
+  }
+  input[type="range"]:focus { outline: none; }
+
+  /* The filled portion is jade and lit; the rest is a dark, empty channel. */
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px; border-radius: 999px;
+    background:
+      linear-gradient(90deg,
+        rgba(111, 199, 155, 0.62) 0 var(--fill, 50%),
+        rgba(163, 194, 208, 0.10) var(--fill, 50%) 100%);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+  }
+  input[type="range"]::-moz-range-track {
+    height: 8px; border-radius: 999px;
+    background: rgba(163, 194, 208, 0.10);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+  }
+  input[type="range"]::-moz-range-progress {
+    height: 8px; border-radius: 999px;
+    background: rgba(111, 199, 155, 0.62);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 20px; height: 20px; margin-top: -6px;
+    border-radius: 50%; border: 0;
+    background: radial-gradient(circle at 34% 28%, #CFF3E1, var(--jade) 62%, #4E9E77);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      0 0 0 1px rgba(111, 199, 155, 0.45),
+      0 0 20px rgba(111, 199, 155, 0.7),
+      0 4px 10px -3px rgba(0, 0, 0, 0.85);
+    transition: box-shadow 260ms var(--ease);
+  }
+  input[type="range"]:hover::-webkit-slider-thumb,
+  input[type="range"]:focus-visible::-webkit-slider-thumb {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      0 0 0 1px rgba(111, 199, 155, 0.6),
+      0 0 30px rgba(111, 199, 155, 0.95),
+      0 4px 10px -3px rgba(0, 0, 0, 0.85);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px; height: 20px; border: 0; border-radius: 50%;
+    background: radial-gradient(circle at 34% 28%, #CFF3E1, var(--jade) 62%, #4E9E77);
+    box-shadow: 0 0 20px rgba(111, 199, 155, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+  input[type="range"]:disabled { opacity: 0.45; }
+
+  .ends {
+    display: flex; justify-content: space-between;
+    font-size: 0.66rem; letter-spacing: 0.13em; text-transform: lowercase;
+    color: rgba(163, 194, 208, 0.42);
+  }
+
+  /*
+    The arc preview. This is the part that ties the page to the glasses: the sender is not
+    picking a number, they are choosing how high the card will hang in the other person's
+    field of view. Showing the arc makes that the obvious reading.
+  */
+  .arc { margin-top: 1.1rem; }
+  .arc svg { display: block; width: 100%; height: 84px; overflow: visible; }
+  .arc .curve { fill: none; stroke: rgba(163, 194, 208, 0.2); stroke-width: 1; }
+  .arc .ghost { fill: rgba(163, 194, 208, 0.16); }
+  .arc .live {
+    fill: var(--jade);
+    filter: drop-shadow(0 0 7px rgba(111, 199, 155, 0.95));
+    transition: cy 340ms var(--ease), r 340ms var(--ease);
+  }
+  .arc .hint {
+    font-size: 9px; letter-spacing: 0.14em;
+    fill: rgba(163, 194, 208, 0.38);
+  }
+
+  /* ---- summary switch ---------------------------------------------------- */
+  /*
+    A two-position glass switch. The lit pane slides between the options rather than
+    appearing under the new one, so the control reads as one object with a moving part —
+    the way the reference's toggles do — instead of two buttons taking turns.
+  */
+  .seg {
+    position: relative;
+    display: flex;
+    padding: 0.28rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(11, 17, 20, 0.5), rgba(163, 194, 208, 0.03));
+    border: 1px solid rgba(163, 194, 208, 0.12);
+    box-shadow: inset 0 2px 7px rgba(0, 0, 0, 0.45);
+  }
+  .seg .slide {
+    position: absolute;
+    top: 0.28rem; bottom: 0.28rem; left: 0.28rem;
+    width: calc(50% - 0.28rem);
+    border-radius: 999px;
+    background: rgba(111, 199, 155, 0.17);
+    border: 1px solid rgba(111, 199, 155, 0.5);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      inset 0 0 14px rgba(111, 199, 155, 0.28),
+      0 0 20px -6px rgba(111, 199, 155, 0.65);
+    transition: transform 380ms var(--ease);
+    pointer-events: none;
+  }
+  /* Driven straight off the button's own aria-pressed — no extra state to keep in sync. */
+  .seg:has(#sumOwn[aria-pressed="true"]) .slide { transform: translateX(100%); }
+  .seg .chip {
+    flex: 1; text-align: center;
+    background: transparent; border-color: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .seg .chip:hover:not(:disabled) { transform: none; box-shadow: none; border-color: transparent; }
+  .seg .chip[aria-pressed="true"] { background: transparent; border-color: transparent; box-shadow: none; }
+
+  .fade { transition: opacity 340ms var(--ease); }
+  .hidden { display: none; }
+  .count {
+    margin-top: 0.55rem; font-size: 0.66rem; letter-spacing: 0.08em;
+    color: rgba(163, 194, 208, 0.42);
+  }
+  .count.over { color: var(--mineral); }
+
+  /* ---- send -------------------------------------------------------------- */
+  /* The one primary action on the page, and the only element that glows at rest. */
+  button.send {
+    width: 100%;
+    margin-top: 1.9rem;
+    background:
+      linear-gradient(180deg, rgba(111, 199, 155, 0.28), rgba(111, 199, 155, 0.13));
+    border: 1px solid rgba(111, 199, 155, 0.55);
+    border-radius: 999px;
+    color: #EAFBF2;
+    font: inherit; font-size: 0.92rem; letter-spacing: 0.06em;
+    padding: 0.85rem 1.6rem; cursor: pointer;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      inset 0 0 20px rgba(111, 199, 155, 0.22),
+      0 0 30px -10px rgba(111, 199, 155, 0.75),
+      0 12px 26px -14px rgba(0, 0, 0, 0.95);
+    transition: transform 300ms var(--ease), box-shadow 300ms var(--ease),
+                filter 300ms var(--ease), opacity 300ms var(--ease);
+  }
+  button.send:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.13);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.34),
+      inset 0 0 24px rgba(111, 199, 155, 0.3),
+      0 0 44px -8px rgba(111, 199, 155, 0.9),
+      0 16px 30px -14px rgba(0, 0, 0, 0.95);
+  }
+  button.send:active:not(:disabled) { transform: translateY(0); filter: brightness(0.97); }
+  button.send:focus-visible { outline: 1px solid rgba(111, 199, 155, 0.9); outline-offset: 3px; }
+  button.send:disabled { opacity: 0.42; cursor: default; filter: saturate(0.5); }
+
+  .status {
+    margin-top: 1.05rem; min-height: 1.4rem;
+    font-size: 0.86rem; line-height: 1.5;
+    color: rgba(163, 194, 208, 0.7);
+  }
+  /* A failure is louder mineral, never a new hue and never a red alarm. */
+  .status[data-tone="error"] {
+    color: var(--mineral);
+    border-left: 1px solid var(--mineral);
+    padding-left: 0.75rem;
+  }
+
+  /* ---- live queue -------------------------------------------------------- */
+  .activity {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    font-size: 0.64rem; letter-spacing: 0.08em;
+    color: rgba(163, 194, 208, 0.55);
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: var(--glass-fill);
+    border: 1px solid rgba(163, 194, 208, 0.12);
+    box-shadow: var(--glass-lip);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    white-space: nowrap;
+  }
+  .activity::before {
+    content: "";
+    width: 5px; height: 5px; border-radius: 50%; flex: none;
+    background: var(--mineral);
+    box-shadow: 0 0 8px rgba(163, 194, 208, 0.8);
+  }
+
+  #queue { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  /* Each queue item is its own small pane of glass, lifted off the panel behind it. */
+  .row {
+    display: flex; align-items: baseline; gap: 0.8rem;
+    padding: 0.78rem 0.95rem;
+    border-radius: 13px;
+    background: linear-gradient(180deg, rgba(163, 194, 208, 0.062), rgba(163, 194, 208, 0.022));
+    border: 1px solid rgba(163, 194, 208, 0.11);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 8px 18px -14px rgba(0, 0, 0, 0.9);
+    transition: border-color 300ms var(--ease), transform 300ms var(--ease),
+                box-shadow 300ms var(--ease);
+  }
+  .row:hover {
+    transform: translateY(-1px);
+    border-color: rgba(163, 194, 208, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 24px -14px rgba(0, 0, 0, 0.95);
+  }
+  .row .src {
+    flex: none; width: 4.4rem;
+    font-size: 0.6rem; letter-spacing: 0.13em;
+    color: rgba(163, 194, 208, 0.5);
+  }
+  .row .ttl { flex: 1; font-size: 0.9rem; line-height: 1.4; }
+  .row .pri {
+    flex: none;
+    font-size: 0.62rem; letter-spacing: 0.07em;
+    color: rgba(163, 194, 208, 0.62);
+    padding: 0.24rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid rgba(163, 194, 208, 0.15);
+    background: rgba(163, 194, 208, 0.05);
+  }
+  /*
+    Claimed work has left the sender's hands and belongs to one of the pair, so it takes
+    the partner's lilac and recedes. This is the page obeying the lens's rule: colour is
+    ownership, and the sender owns nothing.
+  */
+  .row.claimed {
+    background: linear-gradient(180deg, rgba(184, 164, 240, 0.10), rgba(184, 164, 240, 0.035));
+    border-color: rgba(184, 164, 240, 0.26);
+  }
+  .row.claimed:hover { border-color: rgba(184, 164, 240, 0.3); }
+  .row.claimed .ttl, .row.claimed .src { opacity: 0.5; }
+  .row.claimed .ttl { text-decoration: line-through; text-decoration-thickness: 1px; }
+  .row.claimed .pri {
+    color: var(--lilac);
+    opacity: 0.85;
+    border-color: rgba(184, 164, 240, 0.35);
+    background: rgba(184, 164, 240, 0.1);
+  }
+  .empty { margin: 0; font-size: 0.86rem; color: rgba(163, 194, 208, 0.45); }
+
+  /* ---- small screens ----------------------------------------------------- */
+  @media (max-width: 30rem) {
+    body { padding: 26px 14px 64px; }
+    .panel { padding: 1.25rem; border-radius: 20px; }
+    .mark { margin-bottom: 1.6rem; }
+    .mark span.name { letter-spacing: 0.3em; }
+    .chip { padding: 0.5rem 0.8rem; font-size: 0.67rem; }
+    /* A finger needs a real target — the pill grows, it does not just get tapped harder. */
+    .seg .chip { padding: 0.7rem 0.5rem; }
+    button.send { padding: 0.95rem 1.4rem; }
+    .row { flex-wrap: wrap; gap: 0.35rem 0.7rem; }
+    .row .src { width: auto; }
+    .row .ttl { flex: 1 1 100%; order: 3; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 1ms !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="mark" aria-label="relay">
+    <span class="dot jade" aria-hidden="true"></span>
+    <span class="dot lilac" aria-hidden="true"></span>
+    <span class="name">relay</span>
+    <span class="role">sender</span>
+  </div>
+
+  <!-- ================= composer ================= -->
+  <form class="panel" id="form" autocomplete="off">
+    <div class="head"><h2>Compose</h2></div>
+
+    <div class="field">
+      <span class="lbl" id="srcLabel">Source</span>
+      <div class="chips" role="group" aria-labelledby="srcLabel" id="chips"></div>
+    </div>
+
+    <div class="field">
+      <label for="title">Work item</label>
+      <div class="well">
+        <input id="title" type="text" placeholder="Payments failing for customers since 9am"
+               maxlength="180" required />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="body">Detail <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+      <div class="well">
+        <textarea id="body" rows="2" maxlength="600"
+                  placeholder="Anything the pair should know before they pick it up"></textarea>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="prio-head">
+        <span class="lbl" style="margin:0">Priority</span>
+        <span class="prio-val" id="prioVal">3</span>
+      </div>
+      <div class="track-wrap">
+        <input id="prio" type="range" min="1" max="5" step="1" value="3"
+               aria-describedby="prioHint" />
+      </div>
+      <div class="ends"><span>calm</span><span>urgent</span></div>
+
+      <div class="arc" id="prioHint">
+        <svg viewBox="0 0 320 82" role="img"
+             aria-label="Higher priority places the card higher in the glasses">
+          <path class="curve" d="M 10 62 Q 160 14 310 62" />
+          <circle class="ghost" cx="60"  cy="45" r="2.5" />
+          <circle class="ghost" cx="130" cy="30" r="2.5" />
+          <circle class="ghost" cx="215" cy="33" r="2.5" />
+          <circle class="ghost" cx="285" cy="53" r="2.5" />
+          <circle class="live" id="arcDot" cx="160" cy="38" r="5" />
+          <text class="hint" x="10" y="78">lands here in the glasses</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="lbl" id="sumLabel">Summary</span>
+      <div class="seg" role="group" aria-labelledby="sumLabel">
+        <span class="slide" aria-hidden="true"></span>
+        <button type="button" class="chip" id="sumAi" aria-pressed="true">Let AI summarise</button>
+        <button type="button" class="chip" id="sumOwn" aria-pressed="false">Write my own</button>
+      </div>
+      <div id="ownWrap" class="hidden fade" style="margin-top:1rem">
+        <div class="well">
+          <input id="summary" type="text" placeholder="Eight words at most" maxlength="90" />
+        </div>
+        <div class="count" id="sumCount">0 / 8 words</div>
+      </div>
+    </div>
+
+    <button class="send" id="send" type="submit">Send to queue</button>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </form>
+
+  <!-- ================= live queue ================= -->
+  <section class="panel">
+    <div class="head">
+      <h2>Queue</h2>
+      <span class="activity" id="activity">connecting…</span>
+    </div>
+    <div id="queue"><p class="empty">Reading…</p></div>
+  </section>
+</main>
+
+<script>
+  // Publishable key. Public by design — RLS policies and column grants are what actually
+  // restrict it. anon may INSERT (source, title, body), UPDATE (priority, summary, status,
+  // claimed_by, translations) and SELECT everything.
+  const SUPABASE_URL = "https://wfxynchxvjtokenyxjue.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_9TqYP5nitqBF7oyzAjXL3Q_9JtMTVLs";
+  const ENDPOINT = SUPABASE_URL + "/rest/v1/work_items";
+  const HEADERS = {
+    apikey: SUPABASE_KEY,
+    Authorization: "Bearer " + SUPABASE_KEY,
+    "Content-Type": "application/json"
+  };
+
+  const SOURCES = ["BUG", "BILLING", "SALES", "EMAIL", "FEATURE"];
+  const POLL_MS = 3000;
+  const MAX_SUMMARY_WORDS = 8;
+
+  const $ = (id) => document.getElementById(id);
+  let source = "BUG";
+  let ownSummary = false;
+
+  /* ---------------- source chips ---------------- */
+  const chips = $("chips");
+  SOURCES.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = s;
+    b.setAttribute("aria-pressed", String(i === 0));
+    b.addEventListener("click", () => {
+      source = s;
+      [...chips.children].forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
+    });
+    chips.appendChild(b);
+  });
+
+  /* ---------------- priority ---------------- */
+  // The dot rides the same curve the lens arranges cards on, so the number and the place
+  // are visibly the same decision.
+  const prio = $("prio");
+  function paintPriority() {
+    const v = Number(prio.value);
+    $("prioVal").textContent = String(v);
+    // The track paints its own filled portion — the glass has to show how full it is.
+    prio.style.setProperty("--fill", ((v - 1) / 4) * 100 + "%");
+    const dot = $("arcDot");
+    dot.setAttribute("cy", String(62 - (v - 1) * 9));   // 62 at calm, 26 at urgent
+    dot.setAttribute("r", String(4 + (v - 1) * 0.6));   // urgent also reads larger
+  }
+  prio.addEventListener("input", paintPriority);
+  paintPriority();
+
+  /* ---------------- summary toggle ---------------- */
+  function setSummaryMode(own) {
+    ownSummary = own;
+    $("sumAi").setAttribute("aria-pressed", String(!own));
+    $("sumOwn").setAttribute("aria-pressed", String(own));
+    $("ownWrap").classList.toggle("hidden", !own);
+  }
+  $("sumAi").addEventListener("click", () => setSummaryMode(false));
+  $("sumOwn").addEventListener("click", () => setSummaryMode(true));
+
+  const words = (s) => s.trim().split(/\s+/).filter(Boolean);
+  $("summary").addEventListener("input", () => {
+    const n = words($("summary").value).length;
+    const c = $("sumCount");
+    c.textContent = n + " / " + MAX_SUMMARY_WORDS + " words";
+    c.classList.toggle("over", n > MAX_SUMMARY_WORDS);
+  });
+
+  /* ---------------- status ---------------- */
+  function say(message, tone) {
+    const el = $("status");
+    el.textContent = message;
+    if (tone) el.setAttribute("data-tone", tone);
+    else el.removeAttribute("data-tone");
+  }
+
+  /* ---------------- submit ---------------- */
+  //
+  // TWO REQUESTS, NOT ONE, AND THAT IS FORCED BY THE GRANTS.
+  //
+  // anon may INSERT only (source, title, body) — priority and summary are UPDATE-only
+  // columns. So the item is inserted first, asked to return its row, and then patched by
+  // id. Nothing here needs a permission the project did not already have, which is the
+  // point: the sender gains real control without the database being loosened.
+  $("form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const title = $("title").value.trim();
+    if (title === "") return;
+
+    const summary = $("summary").value.trim();
+    if (ownSummary && words(summary).length > MAX_SUMMARY_WORDS) {
+      say("Summary is longer than " + MAX_SUMMARY_WORDS + " words. Shorten it and send again.", "error");
+      return;
+    }
+
+    const detail = $("body").value.trim();
+    const priority = Number(prio.value);
+
+    setBusy(true);
+    say("Sending…");
+
+    try {
+      // 1. Insert the three columns anon is allowed to insert, and ask for the row back
+      //    so we have an id to patch. status defaults to 'open', which the insert policy
+      //    requires.
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { ...HEADERS, Prefer: "return=representation" },
+        body: JSON.stringify({ source: source, title: title, body: detail || title })
+      });
+
+      if (!res.ok) {
+        say("Not sent — the queue rejected it (HTTP " + res.status + "). " + (await safeText(res)), "error");
+        return;
+      }
+
+      const rows = await res.json();
+      const id = Array.isArray(rows) && rows[0] ? rows[0].id : null;
+      if (!id) {
+        // The row exists but we cannot address it, so priority could not be applied.
+        // Say exactly that rather than implying the whole send worked as asked.
+        say("Sent, but priority could not be applied — the insert returned no id.", "error");
+        clearComposer();
+        return;
+      }
+
+      // 2. Patch what only UPDATE can set. Leaving summary null is meaningful: it is the
+      //    signal the host uses to triage the item with Gemini on arrival.
+      const patch = { priority: priority };
+      if (ownSummary && summary !== "") patch.summary = summary;
+
+      const up = await fetch(ENDPOINT + "?id=eq." + encodeURIComponent(id), {
+        method: "PATCH",
+        headers: { ...HEADERS, Prefer: "return=minimal" },
+        body: JSON.stringify(patch)
+      });
+
+      if (!up.ok) {
+        say("Sent, but priority did not apply (HTTP " + up.status + "). " + (await safeText(up)), "error");
+        clearComposer();
+        refresh();
+        return;
+      }
+
+      clearComposer();
+      say(
+        ownSummary
+          ? "Sent at priority " + priority + " with your summary — it skips AI triage."
+          : "Sent at priority " + priority + " — the glasses will summarise it on arrival."
+      );
+      refresh();
+    } catch (networkError) {
+      say("Not sent — could not reach the queue. Check your connection and try again.", "error");
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  async function safeText(res) {
+    try { return (await res.text()).slice(0, 240); } catch (e) { return ""; }
+  }
+
+  function setBusy(busy) {
+    ["title", "body", "prio", "summary", "send"].forEach((id) => { $(id).disabled = busy; });
+    [...chips.children].forEach((c) => { c.disabled = busy; });
+  }
+
+  function clearComposer() {
+    $("title").value = "";
+    $("body").value = "";
+    $("summary").value = "";
+    $("sumCount").textContent = "0 / " + MAX_SUMMARY_WORDS + " words";
+    $("sumCount").classList.remove("over");
+    $("title").focus();
+  }
+
+  /* ---------------- live queue ---------------- */
+  //
+  // A plain 3 s GET, matching the lens's own poll. No websockets: the lens deliberately
+  // does not use them, and two different liveness mechanisms would be two things to
+  // explain when they disagree.
+  function ago(iso) {
+    const then = Date.parse(iso);
+    if (!then) return null;
+    const secs = Math.max(0, Math.round((Date.now() - then) / 1000));
+    if (secs < 60) return secs + "s ago";
+    if (secs < 3600) return Math.round(secs / 60) + "m ago";
+    if (secs < 86400) return Math.round(secs / 3600) + "h ago";
+    return Math.round(secs / 86400) + "d ago";
+  }
+
+  function render(rows) {
+    const q = $("queue");
+    q.innerHTML = "";
+
+    if (rows.length === 0) {
+      q.innerHTML = '<p class="empty">Queue clear — no open work.</p>';
+      return;
+    }
+
+    // Open first, most urgent at the top: the same ordering the arc uses.
+    rows.sort((a, b) => {
+      const ao = a.status === "open" ? 0 : 1;
+      const bo = b.status === "open" ? 0 : 1;
+      if (ao !== bo) return ao - bo;
+      return (b.priority || 0) - (a.priority || 0);
+    });
+
+    rows.forEach((r) => {
+      const row = document.createElement("div");
+      row.className = "row" + (r.status === "open" ? "" : " claimed");
+
+      const src = document.createElement("span");
+      src.className = "src";
+      src.textContent = (r.source || "").toUpperCase();
+
+      const ttl = document.createElement("span");
+      ttl.className = "ttl";
+      // The summary is what the glasses actually show, so prefer it when it exists.
+      ttl.textContent = r.summary || r.title || "";
+
+      const pri = document.createElement("span");
+      pri.className = "pri";
+      pri.textContent =
+        r.status === "open"
+          ? (r.priority == null ? "triaging" : "P" + r.priority)
+          : "claimed";
+
+      row.append(src, ttl, pri);
+      q.appendChild(row);
+    });
+  }
+
+  async function refresh() {
+    try {
+      const res = await fetch(
+        ENDPOINT + "?select=id,source,title,summary,priority,status,claimed_by,created_at&order=created_at.desc&limit=40",
+        { headers: HEADERS }
+      );
+      if (!res.ok) {
+        $("activity").textContent = "queue unreadable (HTTP " + res.status + ")";
+        return;
+      }
+      const rows = await res.json();
+      render(rows);
+
+      // PRESENCE, HONESTLY.
+      //
+      // The anon read cannot see who is wearing the glasses — there is no session table
+      // and no heartbeat to read. Inventing a live dot would be a lie the sender might
+      // act on. What the data DOES prove is that somebody claimed something, so that is
+      // what gets reported: the most recent claim, or nothing at all.
+      const claimed = rows.filter((r) => r.status !== "open");
+      if (claimed.length === 0) {
+        $("activity").textContent = "no claims yet";
+      } else {
+        const newest = claimed
+          .map((r) => r.created_at)
+          .sort()
+          .reverse()[0];
+        const when = ago(newest);
+        $("activity").textContent =
+          claimed.length + " claimed" + (when ? " · newest " + when : "");
+      }
+    } catch (e) {
+      $("activity").textContent = "offline — cannot reach the queue";
+    }
+  }
+
+  refresh();
+  setInterval(refresh, POLL_MS);
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# BEGIN Lens Studio managed Agents-Docs block
+.mcp.json
+.cursor/mcp.json
+.vscode/mcp.json
+.codex/config.toml
+.claude/settings.local.json
+# END Lens Studio managed Agents-Docs block
+
+# Added by Lens Studio (LEAF plugin)
+leaf_plugin_settings.json
+
+# --- Pre-publish additions -------------------------------------------------
+# Spectacles debug signing key. Private key — never publish. Lens Studio
+# regenerates it if it is ever lost.
+spk_debug_key.pem
+
+# Per-machine editor lock, recreated on every open.
+*.lock
+
+# Agent tooling artefact (~2 MB), regenerated on demand.
+.virtual-scene.json
+
+# Stray development scratch output.
+last_response.txt

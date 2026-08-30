@@ -1,0 +1,74 @@
+- !<AssetImportMetadata/44eb4249-34b8-4c08-984b-c93fb6e4446f>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 45afaf33-94f9-435b-ad5b-39e44e07ed54
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 45afaf33-94f9-435b-ad5b-39e44e07ed54
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> 140a8d79-80f7-4f67-8719-673fb67dda0b
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/140a8d79-80f7-4f67-8719-673fb67dda0b>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: 6a4917f8-95f3-408f-8ed2-4d82cc089622
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    arcSpanDegrees: false
+    farDistanceCm: false
+    guestWaitSeconds: false
+    maxHeightCm: false
+    maxVisibleCards: false
+    minHeightCm: false
+    nearDistanceCm: false
+    queueUI: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - queueUI: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      arcSpanDegrees: !<float> 0.000000
+      nearDistanceCm: !<float> 0.000000
+      farDistanceCm: !<float> 0.000000
+      minHeightCm: !<float> 0.000000
+      maxHeightCm: !<float> 0.000000
+      maxVisibleCards: !<float> 0.000000
+      guestWaitSeconds: !<float> 25.000000
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"<span style=\"color: #A3C2D0;\">RelayMain — session, host authority, queue state</span>"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @ui {"widget":"group_start", "label":"References"}'
+    - '// @input AssignableType_1 queueUI {"hint":"The RelayQueueUI view this script pushes queue state into."}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @ui {"widget":"group_start", "label":"Settings"}'
+    - '// @input float arcSpanDegrees {"hint":"Horizontal spread of the queue arc, in degrees. Slot angle carries no data.", "widget":"slider", "min":12, "max":120, "step":1}'
+    - '// @input float nearDistanceCm {"hint":"Distance of the OLDEST item, in centimetres. The longer it waits, the closer it comes.", "widget":"slider", "min":60, "max":200, "step":5}'
+    - '// @input float farDistanceCm {"hint":"Distance of the NEWEST item, in centimetres.", "widget":"slider", "min":80, "max":300, "step":5}'
+    - '// @input float minHeightCm {"hint":"Height of the LOWEST-priority item, in centimetres. Height encodes urgency.", "widget":"slider", "min":-60, "max":20, "step":1}'
+    - '// @input float maxHeightCm {"hint":"Height of the HIGHEST-priority item, in centimetres.", "widget":"slider", "min":0, "max":80, "step":1}'
+    - '// @input float maxVisibleCards {"hint":"How many cards are placed in the arc. Five 9 cm cards fill the ~27 deg usable area; more than that cannot be read without a head-turn.", "widget":"slider", "min":1, "max":8, "step":1}'
+    - "// @input float guestWaitSeconds = 25 {\"hint\":\"How long a guest waits for the host's broadcast before showing local data instead.\", \"widget\":\"slider\", \"min\":5, \"max\":60, \"step\":1}"
+    - '// @ui {"widget":"group_end"}'

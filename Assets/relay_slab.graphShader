@@ -1,0 +1,383 @@
+SchemaVersion: 1
+Nodes:
+  ChildNodes:
+    Node0:
+      DependencyIndex: 0
+      LevelID: 10
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 1
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: [0.659000, 0.745000, 0.784000, 1.000000]
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: ""
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        ScriptName:
+          String: tint
+        SortIndex:
+          Variable: 0
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Tint
+        Tooltip:
+          String: ""
+      PositionX: -313
+      PositionY: -260
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Tint
+    Node1:
+      DependencyIndex: 1
+      LevelID: 11
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 5
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: 0.050000
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: ""
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: 0.0
+        ScriptName:
+          String: faceOpacity
+        SortIndex:
+          Variable: 1
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Face Opacity
+        Tooltip:
+          String: ""
+      PositionX: -313
+      PositionY: -170
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Face Opacity
+    Node2:
+      DependencyIndex: 2
+      LevelID: 12
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 5
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: 0.720000
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: ""
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: 0.0
+        ScriptName:
+          String: edgeOpacity
+        SortIndex:
+          Variable: 2
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Edge Opacity
+        Tooltip:
+          String: ""
+      PositionX: -313
+      PositionY: -80
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Edge Opacity
+    Node3:
+      DependencyIndex: 3
+      LevelID: 13
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 5
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: 0.600000
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: ""
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: 0.0
+        ScriptName:
+          String: frost
+        SortIndex:
+          Variable: 3
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Frost
+        Tooltip:
+          String: ""
+      PositionX: -313
+      PositionY: 10
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Frost
+    Node4:
+      DependencyIndex: 4
+      LevelID: 14
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 5
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: 0.950000
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: ""
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: 0.0
+        ScriptName:
+          String: intensity
+        SortIndex:
+          Variable: 4
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Intensity
+        Tooltip:
+          String: ""
+      PositionX: -313
+      PositionY: 100
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Intensity
+    Node5:
+      DependencyIndex: 5
+      LevelID: 0
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Code:
+          ClassType1: TEXT
+          String: |-
+            input_vec4 tint;
+            input_float faceOpacity;
+            input_float edgeOpacity;
+            input_float frost;
+            input_float intensity;
+            output_vec4 result;
+            
+            // A SOLID SLAB, not a light.
+            //
+            // Nothing here is emissive and nothing blooms — five sessions established that this
+            // preview will not render soft light, so this describes a SURFACE instead. Opacity is
+            // driven by viewing angle: the face you are looking at stays clean and nearly clear so
+            // the text on it reads, while a face turned edge-on to you becomes dense and frosted.
+            // That is what real glass does, and it means head movement alone reveals the thickness.
+            void main()
+            {
+            	vec3 n = normalize(system.getSurfaceNormalCameraSpace());
+            	vec3 v = normalize(-system.getSurfacePositionCameraSpace());
+            
+            	// 1 when a face points straight at the viewer, 0 when it is seen edge-on.
+            	float facing = clamp(abs(dot(n, v)), 0.0, 1.0);
+            	float edge = 1.0 - facing;
+            	edge = edge * edge;
+            
+            	// Frost, on the sides only. A cheap hash keeps it per-pixel without a texture; the
+            	// face stays smooth because `edge` is near zero there.
+            	vec2 uv = system.getSurfaceUVCoord0();
+            	float g = fract(sin(dot(uv * vec2(97.3, 61.7), vec2(12.9898, 78.233))) * 43758.5453);
+            	float grain = mix(1.0, 0.72 + g * 0.56, clamp(frost, 0.0, 1.0) * edge);
+            
+            	float a = mix(faceOpacity, edgeOpacity, edge) * grain;
+            	a = clamp(a, 0.0, 1.0);
+            
+            	// Intensity stays at or below 1 by construction: pushing it past that is what turned
+            	// every previous attempt into a white blob.
+            	result = vec4(tint.rgb * clamp(intensity, 0.0, 1.0), a);
+            }
+        CustomCodeNodeAsset:
+          ClassType1: REFUID
+          String: ""
+        Description:
+          ClassType1: TEXT
+          String: ""
+        Examples:
+          ItemIndex: 0
+          ItemList: "Custom : Input/Output/Global Types : Extra Functions : Procedural Execution : Lighting Loop : System Built-In Values/Functions"
+        ID:
+          Variable: 0
+        Locked:
+          Variable: false
+        Stage:
+          ItemIndex: 1
+          ItemList: "Vertex : Pixel"
+        Title:
+          String: Custom Code
+        UseExternalFile:
+          Variable: false
+        tint:
+          Connection0:
+            NodeLevelID: 10
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        faceOpacity:
+          Connection0:
+            NodeLevelID: 11
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        edgeOpacity:
+          Connection0:
+            NodeLevelID: 12
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        frost:
+          Connection0:
+            NodeLevelID: 13
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        intensity:
+          Connection0:
+            NodeLevelID: 14
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        ngs_Height:
+          Variable: 400
+        ngs_Version:
+          String: 0.1.0
+        result:
+          IOType: 1
+          Variable: [0.0, 0.0, 0.0, 0.0]
+      PositionX: -59
+      PositionY: 91
+      TemplateID: node_util_custom
+      TemplateVersionMinor: 2
+      Title1: Custom Code
+    Node6:
+      CommentSizeX: 0
+      CommentSizeY: 0
+      DependencyIndex: 6
+      LevelID: 1
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Depth:
+          Variable: 1.0
+        DepthMode:
+          ItemIndex: 0
+          ItemList: "Non-Linear - Normalized [0 to 1] : Linear - Normalized [-1 to 1] : View Space - Non-Normalized [-near to -far]"
+        DontFreezeSpec:
+          Variable: false
+        FinalColor:
+          ClassType1: COLOR
+          Connection0:
+            NodeLevelID: 0
+            PortID: result
+          Variable: [1.0, 1.0, 1.0, 1.0]
+        FinalColor1:
+          ClassType1: COLOR
+          Variable: [1.0, 1.0, 1.0, 1.0]
+        FinalColor2:
+          ClassType1: COLOR
+          Variable: [1.0, 1.0, 1.0, 1.0]
+        FinalColor3:
+          ClassType1: COLOR
+          Variable: [1.0, 1.0, 1.0, 1.0]
+        GSplatPointSize:
+          Variable: 0.0
+        GSplatRotation:
+          Variable: [0.0, 0.0, 0.0, 1.0]
+        GSplatScale:
+          Variable: [0.0, 0.0, 0.0]
+        Motion Vector Pass:
+          ItemIndex: 0
+          ItemList: "Write Velocity and Depth : Discard Velocity but Write Depth : Discard Velocity and Depth"
+        Negative:
+          Variable: false
+        PrevWorldPosition:
+          Variable: [0.0, 0.0, 0.0]
+        RayDirection:
+          Variable: [0.0, 1.0, 0.0]
+        RayOrigin:
+          Variable: [0.0, 0.0, 0.0]
+        ShowPrevPos:
+          Variable: false
+        Targets:
+          ItemIndex: 0
+          ItemList: "1 : 2 : 3 : 4"
+        Type:
+          ItemIndex: 0
+          ItemList: "3D : Post Effect : Hair : Gaussian Splatting"
+        WorldNormal:
+          Variable: [0.0, 1.0, 0.0]
+        WorldPosition:
+          Variable: [0.0, 0.0, 0.0]
+        WorldTangent:
+          Variable: [0.0, 0.0, 1.0]
+        WriteDepth:
+          Variable: false
+      PositionX: 220
+      PositionY: 90
+      TemplateID: nodes_main_graph
+      Title1: Shader
+      Title2: 3D
+  IsSubGraph0: true
+  IsSubGraph1: true
+  IsSubGraph2: true
+  IsSubGraph3: true
+  IsSubGraph4: true
+  IsSubGraph5: true
+  IsSubGraph6: true
+  LevelID: 0
+  NodeType: 3
+  PositionX: 0
+  PositionY: 0
+  TemplateID: nodes_main_subgraph
+  Title1: ""
+SystemID: dev.snap.shaders

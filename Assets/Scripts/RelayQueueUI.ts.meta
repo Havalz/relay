@@ -1,0 +1,95 @@
+- !<AssetImportMetadata/1058cfa1-76b4-47d4-8fc9-4987ec6516cd>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 10d9a6af-776a-4b67-983c-7c4454e4d6eb
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 10d9a6af-776a-4b67-983c-7c4454e4d6eb
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> 394e212b-42da-4732-a7b1-0fab4fc07e47
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/394e212b-42da-4732-a7b1-0fab4fc07e47>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: f40533ca-417e-478b-85f3-c2177fe4376f
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    breathAmplitude: false
+    breathPeriodMs: false
+    cardHeightCm: false
+    cardWidthCm: false
+    cardsRoot: false
+    contentDepthCm: false
+    doneColor: false
+    gradientPoolGain: false
+    gradientTopGain: false
+    hoverTiltDegrees: false
+    partnersColor: false
+    statusRoot: false
+    unclaimedColor: false
+    yoursColor: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - cardsRoot: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
+      statusRoot: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
+      cardWidthCm: !<float> 13.000000
+      cardHeightCm: !<float> 9.000000
+      contentDepthCm: 0.300000
+      gradientPoolGain: 2.200000
+      gradientTopGain: 0.450000
+      breathAmplitude: 0.040000
+      breathPeriodMs: !<float> 2000.000000
+      hoverTiltDegrees: !<float> 3.000000
+      unclaimedColor: !<Vec4> {x: 0.639000, y: 0.761000, z: 0.816000, w: 1.000000}
+      yoursColor: !<Vec4> {x: 0.435000, y: 0.780000, z: 0.608000, w: 1.000000}
+      partnersColor: !<Vec4> {x: 0.722000, y: 0.643000, z: 0.941000, w: 1.000000}
+      doneColor: !<Vec4> {x: 0.400000, y: 0.459000, z: 0.486000, w: 1.000000}
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"<span style=\"color: #A3C2D0;\">RelayQueueUI — the spatial work queue surface</span>"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @ui {"widget":"group_start", "label":"References"}'
+    - '// @input SceneObject cardsRoot {"hint":"Authored SceneObject the card deck is built under. Move it to move the whole queue."}'
+    - '// @input SceneObject statusRoot {"hint":"Authored SceneObject the data-source status pill is built under."}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @ui {"widget":"group_start", "label":"Settings"}'
+    - '// @input float cardWidthCm {"hint":"Width of a queue card, in centimetres. The arc fit is derived from this.", "widget":"slider", "min":6, "max":24, "step":0.5}'
+    - '// @input float cardHeightCm {"hint":"Height of a queue card, in centimetres.", "widget":"slider", "min":6, "max":18, "step":0.5}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @ui {"widget":"group_start", "label":"Material"}'
+    - '// @input float contentDepthCm = 0.3 {"hint":"How far the text floats in FRONT of the plate, in cm. This gap is the parallax: move your head and the text slides across the plate behind it.", "widget":"slider", "min":0, "max":1.5, "step":0.05}'
+    - '// @input float gradientPoolGain = 2.2 {"hint":"Brightness of the fill at the BOTTOM edge, where light pools in the glass. 1 = flat.", "widget":"slider", "min":1, "max":4, "step":0.05}'
+    - '// @input float gradientTopGain = 0.45 {"hint":"Brightness of the fill at the TOP edge. Lower = steeper pool.", "widget":"slider", "min":0, "max":1, "step":0.05}'
+    - '// @input float breathAmplitude = 0.04 {"hint":"Edge-brightness swing of a MAXIMUM-urgency card. Priority 1 never breathes; the pulse scales with urgency.", "widget":"slider", "min":0, "max":0.15, "step":0.005}'
+    - '// @input float breathPeriodMs = 2000 {"hint":"One full breath, in milliseconds.", "widget":"slider", "min":800, "max":4000, "step":100}'
+    - '// @input float hoverTiltDegrees = 3 {"hint":"Degrees the card tilts toward you when a hand approaches.", "widget":"slider", "min":0, "max":10, "step":0.5}'
+    - '// @input vec4 unclaimedColor = "{0.639, 0.761, 0.816, 1.0}" {"hint":"Mineral #A3C2D0 — an unclaimed item. Colour encodes ownership and nothing else.", "widget":"color"}'
+    - '// @input vec4 yoursColor = "{0.435, 0.780, 0.608, 1.0}" {"hint":"Jade #6FC79B — an item you have claimed.", "widget":"color"}'
+    - '// @input vec4 partnersColor = "{0.722, 0.643, 0.941, 1.0}" {"hint":"Lilac #B8A4F0 — an item your partner has claimed.", "widget":"color"}'
+    - '// @input vec4 doneColor = "{0.400, 0.459, 0.486, 1.0}" {"hint":"Graphite #66757C — a completed item. Always rendered at low opacity.", "widget":"color"}'
+    - '// @ui {"widget":"group_end"}'

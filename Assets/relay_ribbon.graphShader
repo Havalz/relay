@@ -1,0 +1,383 @@
+SchemaVersion: 1
+Nodes:
+  ChildNodes:
+    Node0:
+      DependencyIndex: 0
+      LevelID: 10
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 1
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: [0.498000, 0.745000, 0.620000, 1.000000]
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: ""
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        ScriptName:
+          String: jade
+        SortIndex:
+          Variable: 0
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Jade
+        Tooltip:
+          String: ""
+      PositionX: -313
+      PositionY: -300
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Jade
+    Node1:
+      DependencyIndex: 1
+      LevelID: 11
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 1
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: [0.698000, 0.639000, 0.863000, 1.000000]
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: ""
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        ScriptName:
+          String: lilac
+        SortIndex:
+          Variable: 1
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Lilac
+        Tooltip:
+          String: ""
+      PositionX: -313
+      PositionY: -215
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Lilac
+    Node2:
+      DependencyIndex: 2
+      LevelID: 12
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 5
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: 0.000000
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: ""
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: 0.0
+        ScriptName:
+          String: progress
+        SortIndex:
+          Variable: 2
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Progress
+        Tooltip:
+          String: ""
+      PositionX: -313
+      PositionY: -130
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Progress
+    Node3:
+      DependencyIndex: 3
+      LevelID: 13
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 5
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: 1.000000
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: ""
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: 0.0
+        ScriptName:
+          String: fade
+        SortIndex:
+          Variable: 3
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Fade
+        Tooltip:
+          String: ""
+      PositionX: -313
+      PositionY: -45
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Fade
+    Node4:
+      DependencyIndex: 4
+      LevelID: 14
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 5
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: 0.090000
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: ""
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: 0.0
+        ScriptName:
+          String: pulseWidth
+        SortIndex:
+          Variable: 4
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Pulse Width
+        Tooltip:
+          String: ""
+      PositionX: -313
+      PositionY: 40
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Pulse Width
+    Node5:
+      DependencyIndex: 5
+      LevelID: 0
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Code:
+          ClassType1: TEXT
+          String: |-
+            input_vec4 jade;
+            input_vec4 lilac;
+            input_float progress;
+            input_float fade;
+            input_float pulseWidth;
+            output_vec4 result;
+            
+            // The crossing, as a surface rather than a light.
+            //
+            // uv.x runs from the sender's end to the receiver's; uv.y runs across the ribbon. That
+            // separation is the whole point: the colour handover and the travelling pulse live on
+            // one axis, the soft edge lives on the other, and neither interferes with the other.
+            // Nothing is emissive, so there is nothing to bloom into a white blob.
+            void main()
+            {
+            	vec2 uv = system.getSurfaceUVCoord0();
+            
+            	// Soft along its width, so the ribbon has no hard cut on either side.
+            	float across = 1.0 - smoothstep(0.0, 1.0, abs(uv.y - 0.5) * 2.0);
+            	across = across * across;
+            
+            	// The trail exists only BEHIND the leading point — the ribbon draws itself as the
+            	// card advances instead of appearing whole.
+            	float drawn = 1.0 - smoothstep(progress, progress + 0.05, uv.x);
+            	// ...and thins out further back, so it reads as a wake rather than a painted stripe.
+            	float tail = mix(0.25, 1.0, clamp(uv.x / max(progress, 0.001), 0.0, 1.0));
+            
+            	// The leading pulse, running at the head of the draw.
+            	float pulse = 1.0 - smoothstep(0.0, max(pulseWidth, 0.01), abs(uv.x - progress));
+            	pulse = pulse * pulse;
+            
+            	// Jade where it left, lilac where it lands. Nothing invented in between.
+            	vec3 col = mix(jade.rgb, lilac.rgb, clamp(uv.x, 0.0, 1.0));
+            
+            	float a = across * (drawn * tail * 0.5 + pulse * 0.85) * fade;
+            	result = vec4(col, clamp(a, 0.0, 1.0));
+            }
+        CustomCodeNodeAsset:
+          ClassType1: REFUID
+          String: ""
+        Description:
+          ClassType1: TEXT
+          String: ""
+        Examples:
+          ItemIndex: 0
+          ItemList: "Custom : Input/Output/Global Types : Extra Functions : Procedural Execution : Lighting Loop : System Built-In Values/Functions"
+        ID:
+          Variable: 0
+        Locked:
+          Variable: false
+        Stage:
+          ItemIndex: 1
+          ItemList: "Vertex : Pixel"
+        Title:
+          String: Custom Code
+        UseExternalFile:
+          Variable: false
+        jade:
+          Connection0:
+            NodeLevelID: 10
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        lilac:
+          Connection0:
+            NodeLevelID: 11
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        progress:
+          Connection0:
+            NodeLevelID: 12
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        fade:
+          Connection0:
+            NodeLevelID: 13
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        pulseWidth:
+          Connection0:
+            NodeLevelID: 14
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        ngs_Height:
+          Variable: 400
+        ngs_Version:
+          String: 0.1.0
+        result:
+          IOType: 1
+          Variable: [0.0, 0.0, 0.0, 0.0]
+      PositionX: -59
+      PositionY: 91
+      TemplateID: node_util_custom
+      TemplateVersionMinor: 2
+      Title1: Custom Code
+    Node6:
+      CommentSizeX: 0
+      CommentSizeY: 0
+      DependencyIndex: 6
+      LevelID: 1
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Depth:
+          Variable: 1.0
+        DepthMode:
+          ItemIndex: 0
+          ItemList: "Non-Linear - Normalized [0 to 1] : Linear - Normalized [-1 to 1] : View Space - Non-Normalized [-near to -far]"
+        DontFreezeSpec:
+          Variable: false
+        FinalColor:
+          ClassType1: COLOR
+          Connection0:
+            NodeLevelID: 0
+            PortID: result
+          Variable: [1.0, 1.0, 1.0, 1.0]
+        FinalColor1:
+          ClassType1: COLOR
+          Variable: [1.0, 1.0, 1.0, 1.0]
+        FinalColor2:
+          ClassType1: COLOR
+          Variable: [1.0, 1.0, 1.0, 1.0]
+        FinalColor3:
+          ClassType1: COLOR
+          Variable: [1.0, 1.0, 1.0, 1.0]
+        GSplatPointSize:
+          Variable: 0.0
+        GSplatRotation:
+          Variable: [0.0, 0.0, 0.0, 1.0]
+        GSplatScale:
+          Variable: [0.0, 0.0, 0.0]
+        Motion Vector Pass:
+          ItemIndex: 0
+          ItemList: "Write Velocity and Depth : Discard Velocity but Write Depth : Discard Velocity and Depth"
+        Negative:
+          Variable: false
+        PrevWorldPosition:
+          Variable: [0.0, 0.0, 0.0]
+        RayDirection:
+          Variable: [0.0, 1.0, 0.0]
+        RayOrigin:
+          Variable: [0.0, 0.0, 0.0]
+        ShowPrevPos:
+          Variable: false
+        Targets:
+          ItemIndex: 0
+          ItemList: "1 : 2 : 3 : 4"
+        Type:
+          ItemIndex: 0
+          ItemList: "3D : Post Effect : Hair : Gaussian Splatting"
+        WorldNormal:
+          Variable: [0.0, 1.0, 0.0]
+        WorldPosition:
+          Variable: [0.0, 0.0, 0.0]
+        WorldTangent:
+          Variable: [0.0, 0.0, 1.0]
+        WriteDepth:
+          Variable: false
+      PositionX: 220
+      PositionY: 90
+      TemplateID: nodes_main_graph
+      Title1: Shader
+      Title2: 3D
+  IsSubGraph0: true
+  IsSubGraph1: true
+  IsSubGraph2: true
+  IsSubGraph3: true
+  IsSubGraph4: true
+  IsSubGraph5: true
+  IsSubGraph6: true
+  LevelID: 0
+  NodeType: 3
+  PositionX: 0
+  PositionY: 0
+  TemplateID: nodes_main_subgraph
+  Title1: ""
+SystemID: dev.snap.shaders

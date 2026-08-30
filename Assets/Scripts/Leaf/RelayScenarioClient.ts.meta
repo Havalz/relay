@@ -1,0 +1,47 @@
+- !<AssetImportMetadata/878ab0d6-e317-4b08-8945-2dfada25bb57>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 7de28f9c-0988-468c-badd-23b95187c4c4
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 7de28f9c-0988-468c-badd-23b95187c4c4
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> 3d380cdf-fc86-4195-8a8a-ad17cc1f0cb4
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/3d380cdf-fc86-4195-8a8a-ad17cc1f0cb4>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: d75d4433-7982-4492-b3d3-6dcb778a9c8f
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    scenarioIds: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - scenarioIds: !<string[]>
+        []
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @input string[] scenarioIds = {} {"hint":"Scenario ids to run, in order. Empty runs every registered scenario."}'
