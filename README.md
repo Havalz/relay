@@ -6,7 +6,7 @@ vanishes from your partner's view the moment you take it.**
 Built for Snap Spectacles in Lens Studio.
 
 - **Demo video:** https://drive.google.com/file/d/1Uz2kg321gxzQwrwnZdW2tuxV92j8ipGf/view?usp=sharing
-- **Companion sender page:** `TODO — add deployed URL` (runs locally from
+- **Companion sender page:** `https://havalz.github.io/relay/web/` (runs locally from
   [`web/index.html`](web/index.html) with no server)
 
 ---
